@@ -1,4 +1,4 @@
-# Airline Fuel Optimization Agent (Lambda + Strands + MCP)
+# Airline Fuel Optimization Agent in Lambda + Strands + MCP
 
 ## What this does
 - Reads mock flight + weather + aircraft data.
@@ -11,11 +11,38 @@
 - **Lambda** runs the agent; **API Gateway** exposes `/optimize`.
 - Optional **Lambda + Web Adapter** runs the MCP server (`/mcp`) and publishes to **SNS**.
 
+## Architecture summary
+
+![diagram](images/diagram.png)
+
+## Demo
+
+**Watch a demo** [here](https://drive.google.com/file/d/1RfUpryrSqu7hGz8PsFKkFYAI-TBBBV8K/view)
+
 ## Deploy
 
 ```
 sam build
 sam deploy --guided
+```
+
+Grab the `/optmize` endpoint and run using curl or postman with `"{\"flight_id\":\"FL1001\"}"` as body request
+
+## Local test
+
+```
+sam build --use-container
+sam local start-api
+```
+
+In a different terminal or using postman run:
+
+```
+curl -s -X POST http://127.0.0.1:3000/optimize -H "Content-Type: application/json" -d "{\"flight_id\":\"FL1001\"}"
+
+curl -s -X POST http://127.0.0.1:3000/optimize -H "Content-Type: application/json" -d "{\"flight_id\":\"FL2002\"}"
+
+curl -s -X POST http://127.0.0.1:3000/optimize -H "Content-Type: application/json" -d "{\"flight_id\":\"BADID\"}"
 ```
 
 ## Limitations
