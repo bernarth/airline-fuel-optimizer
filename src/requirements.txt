@@ -1,6 +1,0 @@
-strands-agents==1.* 
-strands-agents-tools>=0.2.7 
-
-mcp==1.*
-
-boto3==1.*
