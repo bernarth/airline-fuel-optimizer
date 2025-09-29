@@ -1,0 +1,76 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Airline Fuel Optimization Agent (Strands) + Mission Control MCP
+
+Globals:
+  Function:
+    Runtime: python3.13  # Python 3.13 is supported in Lambda. :contentReference[oaicite:8]{index=8}
+    Timeout: 30
+    MemorySize: 1024
+    Architectures: [ x86_64 ]
+
+Resources:
+  # SNS topic to receive published recommendations
+  MissionControlTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: mission-control-recommendations
+
+  FuelAgentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: fuel_agent_lambda.handler
+      Description: Fuel Optimization Agent (Strands)
+      Environment:
+        Variables:
+          BEDROCK_MODEL_ID: us.amazon.nova-pro-v1:0  # adjust if needed. :contentReference[oaicite:9]{index=9}
+          MISSION_CONTROL_MCP_URL: "https://yeqf2zrsad.execute-api.us-east-1.amazonaws.com/mcp"
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - Statement:
+            Effect: Allow
+            Action:
+              - "bedrock:InvokeModel"
+              - "bedrock:InvokeModelWithResponseStream"
+            Resource: "*"   # keep simple for demo; scope down in prod
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            Path: /optimize
+            Method: POST
+
+  MissionControlMCPFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: mcp_server/
+      # Web Adapter: run a local HTTP server process on port 8000. :contentReference[oaicite:10]{index=10}
+      Handler: run.sh
+      Description: Mission Control MCP Server (Streamable HTTP) publishing to SNS
+      Layers:
+        - !Sub arn:aws:lambda:${AWS::Region}:753240598075:layer:LambdaAdapterLayerX86:25
+      Environment:
+        Variables:
+          AWS_LAMBDA_EXEC_WRAPPER: /opt/bootstrap
+          PORT: 8000
+          SNS_TOPIC_ARN: !Ref MissionControlTopic
+          AWS_LWA_INVOKE_MODE: response_stream
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt MissionControlTopic.TopicName
+      Events:
+        Http:
+          Type: HttpApi
+          Properties:
+            Path: /mcp
+            Method: POST
+
+Outputs:
+  OptimizeEndpoint:
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/optimize"
+  McpEndpoint:
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/mcp"
+  SnsTopicArn:
+    Value: !Ref MissionControlTopic

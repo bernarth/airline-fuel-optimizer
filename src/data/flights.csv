@@ -1,0 +1,3 @@
+flight_id,origin_lat,origin_lon,dest_lat,dest_lon,planned_alt_ft
+FL1001,40.6413,-73.7781,34.0522,-118.2437,34000
+FL2002,51.4700,-0.4543,40.6413,-73.7781,30000

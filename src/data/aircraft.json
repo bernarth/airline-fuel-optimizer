@@ -1,0 +1,5 @@
+{
+  "type": "A320",
+  "base_fuel_burn_kg_per_nm": 2.5,
+  "altitude_efficiency": { "30000": 1.00, "34000": 0.96, "38000": 0.93 }
+}
